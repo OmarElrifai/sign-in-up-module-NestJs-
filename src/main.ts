@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { Logger } from '@nestjs/common';
 
 
 async function bootstrap() {
@@ -12,6 +14,37 @@ async function bootstrap() {
       allowedHeaders: 'Content-Type, Accept, Authorization,App-Token', // <== Add necessary headers
       credentials: true, // <== If you use cookies or authentication headers
     });
+
+  // Apply global exception filter
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
+  // Request logger middleware
+  app.use((req: any, res: any, next: any) => {
+    const logger = new Logger('HTTP');
+    const { method, originalUrl, ip, headers } = req;
+    const userAgent = headers['user-agent'] || '';
+    const requestTime = new Date().toISOString();
+
+    res.on('finish', () => {
+      const { statusCode } = res;
+      const logMessage = {
+        timestamp: requestTime,
+        method,
+        url: originalUrl,
+        statusCode,
+        userAgent,
+        ip: ip || 'unknown',
+      };
+
+      if (statusCode >= 400) {
+        logger.error(JSON.stringify(logMessage));
+      } else {
+        logger.log(JSON.stringify(logMessage));
+      }
+    });
+
+    next();
+  });
 
   // Swagger configuration
   const config = new DocumentBuilder()
