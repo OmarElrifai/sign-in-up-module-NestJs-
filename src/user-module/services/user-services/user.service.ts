@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UserDTO } from 'src/user-module/dtos/UserDTO';
 import { User } from 'src/user-module/schemas/user-schema';
-
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserServices {
@@ -16,36 +16,43 @@ export class UserServices {
     ){}
 
     async createUser(userDTO : UserDTO):Promise<User>{
-        const existingUser = await this.userModel.find({
-            email:userDTO.email,
-            password:userDTO.password
-        });
-        if(existingUser.length > 0 ){
-            throw new HttpException('User already exists',HttpStatus.CONFLICT)
-        }
+        userDTO.salt = await bcrypt.genSalt();
+        userDTO.password = await bcrypt.hash(userDTO.password!, userDTO.salt);
         const user = new this.userModel(userDTO);
-        return user.save();
+        return await user.save();
     }
 
     async login(userDTO:UserDTO):Promise<Object>{
         const user =  await this.userModel.find({
-            email:userDTO.email,
-            password:userDTO.password
+            email:userDTO.email
         });
-        if(user.length == 0 ){
+        console.log("user --> ", user);
+        const retrievedUser = user[0] as User;
+        if(retrievedUser){
+            const hashedPassword =  await bcrypt.hash(userDTO.password!, retrievedUser.salt);
+                    console.log("hashedPassword --> ", hashedPassword);
+
+            if(hashedPassword == retrievedUser.password){
+                const payload = {
+                    oi:user[0]._id,
+                    email:user[0].email,
+                }
+                return  {accessToken: await this.jwtService.signAsync(payload)};
+            }else{
+                throw new HttpException('Invalid user or password',HttpStatus.FORBIDDEN)
+            }
+        }else{
             throw new HttpException('Invalid user or password',HttpStatus.FORBIDDEN)
         }
-        const payload = {
-            oi:user[0]._id,
-            email:user[0].email,
-        }
-        return  {access_token: await this.jwtService.signAsync(payload)};
+        
+        
     }
 
+    
+
     async getUserInfo(tokenPayload:any):Promise<User>{
-        console.log("tokenPayload ---- >",tokenPayload)
         const user =  await this.userModel.find({
-            email:tokenPayload.email,
+            _id:tokenPayload.oi,
         });
         if(user.length == 0 ){
             throw new HttpException('User Not Found',HttpStatus.NOT_FOUND)

@@ -4,9 +4,10 @@ import { UserServices } from 'src/user-module/services/user-services/user.servic
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/user-module/schemas/user-schema';
 import { JwtModule } from '@nestjs/jwt';
-import { AuthGuard } from './guard/auth.guard/auth.guard.service';
+import { AuthGuard } from './guard/auth-guard/auth.guard.service';
 import * as dotenv from 'dotenv';
 import { ConfigModule } from '@nestjs/config';
+import { AppGuard } from './guard/app-guard/app-guard.service';
 @Module({
     imports:[
         MongooseModule.forRoot("mongodb://localhost:27017/users"),
@@ -19,7 +20,8 @@ import { ConfigModule } from '@nestjs/config';
     controllers:[UserController],
     providers:[
         UserServices,
-        AuthGuard 
+        AuthGuard,
+        AppGuard
     ]
 })
 export class UserModule {}

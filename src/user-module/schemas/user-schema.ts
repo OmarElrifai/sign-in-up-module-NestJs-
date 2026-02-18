@@ -25,6 +25,9 @@ export class User {
     })
     password:string;
 
+    @Prop()
+    salt:string;
+
 }
 export const UserSchema = SchemaFactory.createForClass(User);
 UserSchema.index({ email: 1, firstName: 1 }, { unique: true });

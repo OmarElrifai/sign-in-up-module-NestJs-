@@ -7,7 +7,11 @@ import * as path from 'path';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot(
+      {
+        isGlobal:true
+      }
+    ),
     UserModule,
   ],
   controllers: [AppController],
