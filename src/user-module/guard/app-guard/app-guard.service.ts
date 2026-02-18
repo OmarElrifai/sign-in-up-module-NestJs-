@@ -10,6 +10,7 @@ export class AppGuard  implements CanActivate  {
          const request = context.switchToHttp().getRequest();
          const retrievedToken = request.headers["app-token"];
          const appToken = process.env.APP_TOKEN;
+
          if(retrievedToken != appToken){
             throw new ForbiddenException({errorMessage:'You do not have the required permissions.'});
          }else{

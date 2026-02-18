@@ -1,15 +1,35 @@
 import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { UserDTO } from 'src/user-module/dtos/UserDTO';
 import { UserServices } from 'src/user-module/services/user-services/user.service';
 import { AppGuard } from './guard/app-guard/app-guard.service';
 import { AuthGuard } from './guard/auth-guard/auth.guard.service';
+
 @UseGuards(AppGuard)
+@ApiTags('User')
 @Controller('user')
 export class UserController {
 
     constructor(public userServices:UserServices){}
 
     @Post("register")
+    @ApiOperation({ summary: 'Register a new user' })
+    @ApiHeader({
+        name: 'app-token',
+        description: 'Application token for authentication',
+        required: true,
+    })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            required: ['email', 'password'],
+            properties: {
+                email: { type: 'string', format: 'email', example: 'user@example.com' },
+                name: { type: 'string', example: 'johndoe' },
+                password: { type: 'string', format: 'password', example: 'securePassword123' },
+            },
+        },
+    })
     async createUser(@Body() user:UserDTO, @Res() res){
         try{
             const userDoc = await this.userServices.createUser(user);       
@@ -23,6 +43,22 @@ export class UserController {
     }
 
     @Post("login")
+    @ApiOperation({ summary: 'User login' })
+    @ApiHeader({
+        name: 'app-token',
+        description: 'Application token for authentication',
+        required: true,
+    })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            required: ['email', 'password'],
+            properties: {
+                email: { type: 'string', format: 'email', example: 'user@example.com' },
+                password: { type: 'string', format: 'password', example: 'securePassword123' },
+            },
+        },
+    })
     async login(@Headers() header, @Body() user:UserDTO, @Res() res){
         try{
 
@@ -37,6 +73,13 @@ export class UserController {
 
     @UseGuards(AuthGuard)
     @Get("getInfo")
+    @ApiBearerAuth('JWT-auth')
+    @ApiOperation({ summary: 'Get user profile' })
+    @ApiHeader({
+        name: 'app-token',
+        description: 'Application token for authentication',
+        required: true,
+    })
     async getInfo(@Req() req:any, @Res() res){
         try{
             const user = await this.userServices.getUserInfo(req.tokenPayload);       

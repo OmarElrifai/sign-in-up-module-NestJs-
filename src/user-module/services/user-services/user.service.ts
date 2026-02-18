@@ -15,17 +15,21 @@ export class UserServices {
         private jwtService:JwtService
     ){}
 
-    async createUser(userDTO : UserDTO):Promise<User>{
+    async createUser(userDTO : UserDTO):Promise<Object>{
         userDTO.salt = await bcrypt.genSalt();
         userDTO.password = await bcrypt.hash(userDTO.password!, userDTO.salt);
         const user = new this.userModel(userDTO);
-        return await user.save();
+        const savedUser = await user.save();
+        return { 
+            name: savedUser.name,
+            email: savedUser.email
+        };
     }
 
     async login(userDTO:UserDTO):Promise<Object>{
         const user =  await this.userModel.find({
             email:userDTO.email
-        });
+        }).select("+password +salt");
         const retrievedUser = user[0] as User;
         if(retrievedUser){
             const hashedPassword =  await bcrypt.hash(userDTO.password!, retrievedUser.salt);
