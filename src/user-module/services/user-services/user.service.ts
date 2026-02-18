@@ -26,11 +26,9 @@ export class UserServices {
         const user =  await this.userModel.find({
             email:userDTO.email
         });
-        console.log("user --> ", user);
         const retrievedUser = user[0] as User;
         if(retrievedUser){
             const hashedPassword =  await bcrypt.hash(userDTO.password!, retrievedUser.salt);
-                    console.log("hashedPassword --> ", hashedPassword);
 
             if(hashedPassword == retrievedUser.password){
                 const payload = {

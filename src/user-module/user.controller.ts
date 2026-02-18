@@ -25,8 +25,7 @@ export class UserController {
     @Post("login")
     async login(@Headers() header, @Body() user:UserDTO, @Res() res){
         try{
-            console.log("headers ------- > ",header);
-            console.log("headers ------- > ",header["custom-header"]);
+
             const auth = await this.userServices.login(user);
             res.status(HttpStatus.OK).send(auth)
         }catch(e){
